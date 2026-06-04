@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Culinário - Técnicas e Sabores do Mundo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* PALETA DE CORES (Tons Quentes/Culinários) */
+        :root {
+            --bg-color: #fff7ed;
+            --card-bg: #ffffff;
+            --primary: #ea580c;
+            --primary-dark: #c2410c;
+            --success: #16a34a;
+            --error: #dc2626;
+            --text-main: #292524;
+            --text-light: #78716c;
+            --border-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 20px 40px rgba(234, 88, 12, 0.08);
+            overflow: hidden;
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA DE PROGRESSO */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #ffedd5;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 40px 50px 20px;
+            text-align: center;
+        }
+
+        .topic-badge {
+            display: inline-block;
+            background: #ffedd5;
+            color: var(--primary-dark);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        /* TELAS */
+        .screen {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 20px 50px 50px;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* TELA DE INTRODUÇÃO */
+        #intro-screen {
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 40px;
+        }
+
+        .intro-title {
+            font-family: 'Lora', serif;
+            font-size: 44px;
+            color: var(--text-main);
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .intro-title span {
+            color: var(--primary);
+        }
+
+        .btn-main {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            box-shadow: 0 10px 20px rgba(234, 88, 12, 0.2);
+        }
+
+        .btn-main:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+
+        /* TELA DE PERGUNTAS */
+        .question-text {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--text-main);
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: #fdf8f6;
+            border: 2px solid #ffedd5;
+            padding: 20px 25px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-family: 'Nunito', sans-serif;
+            color: var(--text-main);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: white;
+            transform: scale(1.02);
+        }
+
+        .option-btn span {
+            font-weight: 700;
+            color: var(--primary);
+            margin-right: 15px;
+            font-size: 20px;
+        }
+
+        .option-btn.correct {
+            background: #f0fdf4 !important;
+            border-color: var(--success) !important;
+            color: var(--success);
+        }
+
+        .option-btn.wrong {
+            background: #fef2f2 !important;
+            border-color: var(--error) !important;
+            color: var(--error);
+        }
+
+        /* MODAL DE FEEDBACK */
+        .feedback-panel {
+            position: absolute;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            padding: 40px 50px;
+            border-radius: 30px 30px 0 0;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* ESPAÇO PARA IMAGEM ENTRE PERGUNTA E OPÇÕES */
+        .question-image {
+            height: 220px;
+            max-width: 700px;
+            margin: 20px auto;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #fffaf0, #fff3ea);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(234,88,12,0.06);
+        }
+
+        .question-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .question-image a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 18px;
+            padding: 16px 24px;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 6px 18px rgba(234,88,12,0.08);
+        }
+
+        .question-image a:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .feedback-panel.show {
+            bottom: 0;
+        }
+
+        .feedback-title {
+            font-family: 'Lora', serif;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .feedback-text {
+            font-size: 18px;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+
+        /* INPUT EASTER EGG */
+        .secret-input {
+            margin-top: 25px;
+            padding: 10px 15px;
+            border: 2px dashed #ffedd5;
+            border-radius: 8px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+            color: var(--text-light);
+            transition: border-color 0.3s;
+        }
+        
+        .secret-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* RESPONSIVIDADE */
+        @media (max-width: 768px) {
+            .app-container { min-height: 100vh; border-radius: 0; }
+            .intro-title { font-size: 32px; }
+            .question-text { font-size: 22px; }
+            .option-btn { font-size: 16px; padding: 15px; }
+            .screen { padding: 20px; }
+            .feedback-panel { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div id="intro-screen" class="screen active">
+        <div class="topic-badge">Gastronomia Mundial</div>
+        <h1 class="intro-title">Quiz de Preparo Técnico:<br><span>Técnicas, Woks</span></h1>
+        <p style="color: var(--text-light); font-size: 18px; max-width: 700px; margin-top: 10px;">
+            Domine as bases: do controlo de temperatura na wok, pastas cremosas do Médio Oriente, os clássicos africanos, massas frescas italianas e os segredos do fogo e da cozedura!
+        </p>
+        <button class="btn-main" onclick="startQuiz()">Começar o Quiz</button>
+    </div>
+
+    <div id="quiz-screen" class="screen">
+        <div class="header">
+            <div class="topic-badge" id="question-counter">Questão 1 de 58</div>
+        </div>
+        <h2 class="question-text" id="question-text">A carregar pergunta...</h2>
+        <!-- Espaço reservado para imagem relacionada à pergunta -->
+        <div id="question-image" class="question-image" aria-hidden="true"></div>
+        <div class="options-list" id="options-container">
+            </div>
+    </div>
+
+    <div id="result-screen" class="screen" style="text-align: center; justify-content: center; align-items: center;">
+        <div class="topic-badge">Avaliação Concluída</div>
+        <div class="score-display" id="final-score">0/50</div>
+        <h2 style="font-family: 'Lora'; font-size: 28px; margin-bottom: 15px;" id="result-title">Bom trabalho!</h2>
+        <p style="color: var(--text-light); font-size: 18px; max-width: 600px;" id="result-message"></p>
+        <button class="btn-main" onclick="location.reload()">Jogar Novamente</button>
+        
+        <input type="text" id="easter-egg-trigger" class="secret-input" placeholder="Código secreto?..." oninput="checkSecretCode(this.value)">
+    </div>
+
+    <div id="easter-egg-screen" class="screen" style="text-align: center; justify-content: center; align-items: center; background: #fff1f2;">
+        <div class="topic-badge" style="background: #ffe4e6; color: #e11d48;">Surpresa para a Chef! 🍳❤️</div>
+        <h1 style="font-family: 'Lora', serif; font-size: 38px; color: #9f1239; margin-bottom: 20px;">Super Chef Fe</h1>
+        <p style="color: #4c0519; font-family: 'Lora', serif; font-size: 24px; max-width: 650px; font-weight: 700; line-height: 1.6; font-style: italic; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(225, 29, 72, 0.05);">
+            "Se você for bem na prova, eu te levo pra sair pra onde você quiser" V.
+        </p>
+        <button class="btn-main" style="background: #e11d48; box-shadow: 0 10px 20px rgba(225, 29, 72, 0.2);" onclick="closeEasterEgg()">Voltar aos Resultados</button>
+    </div>
+
+    <div id="feedback-panel" class="feedback-panel">
+        <h3 class="feedback-title" id="feedback-title">Resposta</h3>
+        <div class="feedback-text" id="feedback-text">Explicação...</div>
+        <button class="btn-main" style="margin-top: 0;" id="next-btn" onclick="nextQuestion()">Próxima Questão</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        // --- BLOCO de questoes ---
+        {
+            topic: "LOCRO",
+            q: "Qual etapa vem primeiro no preparo tradicional do Locro?",
+            image: "images/Locro02.jpg",
+            options: ["Refogar os temperos (cebola e alho)", "Adicionar as carnes ao preparo", "Cozinhar o milho e o feijão", "Ajustar a consistência final do prato", "Acrescentar a abóbora e cozinhar lentamente"],
+            correct: 2,
+            exp: "O primeiro passo do Locro é cozinhar o milho branco e o feijão separadamente ou previamente. Isso garante que os grãos fiquem macios o suficiente para integrar o cozimento lento depois, sem comprometer a textura final do prato."
+        },
+        {
+            topic: "LOCRO",
+            q: "Qual erro abaixo compromete diretamente a textura e o resultado final do Locro?",
+            videoUrl: "https://www.youtube.com/watch?v=0JKjHFiz3yo",
+            options: ["Usar apenas carne bovina no preparo", "Não cozinhar o milho e o feijão antes de adicionar as carnes", "Cozinhar tudo em fogo alto e rápido", "Ajustar o sal apenas no final do preparo", "Utilizar panela de ferro para o cozimento"],
+            correct: 1,
+            exp: "O milho e o feijão precisam de cozimento prévio para amaciar. Se forem adicionados crus junto com as carnes, o prato não atinge a textura espessa e cremosa característica do Locro, além de ficar com grãos duros e cozimento desigual."
+        },
+        {
+            topic: "Guacamole",
+            q: "Qual sequência representa o processo correto de preparo do guacamole?",
+            image: "images/Guacamole.jpeg",
+            options: ["Misturar tudo e depois amassar o abacate", "Amassar o abacate e depois adicionar os demais ingredientes picados", "Picar tudo antes e só depois amassar o abacate com limão", "Adicionar sal primeiro e depois o abacate inteiro", "Bater todos os ingredientes no liquidificador"],
+            correct: 1,
+            exp: "O abacate deve ser amassado primeiro para criar a base cremosa. Depois disso, os demais ingredientes são incorporados, preservando textura e evitando que o tomate e a cebola virem pasta."
+        },
+        {
+            topic: "Guacamole",
+            q: "Qual erro mais compromete a textura e a identidade do guacamole?",
+            videoUrl: "https://www.youtube.com/watch?v=ERuIDnDhlA8",
+            options: ["Usar limão em excesso", "Servir imediatamente após o preparo", "Usar cebola roxa em vez de branca", "Temperar apenas no final", "Misturar os ingredientes sem amassar o abacate antes"],
+            correct: 4,
+            exp: "Se o abacate não for amassado antes, a mistura perde a cremosidade característica. O resultado vira uma salada irregular em vez de um creme consistente de guacamole."
+        },
+        {
+            topic: "Chili con Carne",
+            q: "Qual sequência representa o método correto de preparo do Chili con carne?",
+            image: "images/Chili con Carne.avif",
+            options: ["Adicionar feijão cru junto com a carne moída", "Cozinhar tudo junto desde o início em fogo baixo", "Refogar carne e temperos antes de adicionar tomate e feijão", "Colocar o feijão primeiro e depois a carne", "Finalizar o prato antes de cozinhar a carne"],
+            correct: 2,
+            exp: "O correto é começar refogando a carne com cebola, alho e pimenta para desenvolver sabor. Só depois entram o tomate e, por último, o feijão já cozido. Isso garante base de sabor e textura adequada."
+        },
+        {
+            topic: "Chili con Carne",
+            q: "Qual erro compromete mais o resultado final do Chili con carne?",
+            videoUrl: "https://www.youtube.com/watch?v=78d0BBht0lo",
+            options: ["Usar feijão vermelho em vez de outro tipo", "Cozinhar por tempo excessivo após adicionar o feijão", "Refogar a carne antes de adicionar os líquidos", "Usar pimenta em excesso no início", "Adicionar tomate antes de dourar a carne"],
+            correct: 4,
+            exp: "Adicionar o tomate antes de selar e refogar bem a carne impede o desenvolvimento do sabor base (reação de Maillard). O prato fica mais ácido e menos complexo."
+        },
+        {
+            topic: "Jambalaya",
+            q: "Qual sequência representa o processo correto de preparo da Jambalaya?",
+            image: "images/Jambalaya.avif",
+            options: ["Adicionar arroz cru antes de selar as proteínas", "Cozinhar tudo junto sem refogar nada antes", "Selar proteínas, refogar vegetais, depois adicionar arroz e caldo", "Colocar o caldo primeiro e depois as carnes cruas", "Misturar arroz já cozido com os demais ingredientes no final"],
+            correct: 2,
+            exp: "A base de sabor da Jambalaya começa com o selamento das proteínas. Em seguida, os vegetais são refogados para formar o fundo aromático, e só depois entram o arroz e o caldo para o cozimento final."
+        },
+        {
+            topic: "Jambalaya",
+            q: "Qual erro mais compromete a textura final da Jambalaya?",
+            videoUrl: "https://www.youtube.com/watch?v=2hPgTrS7lBk",
+            options: ["Usar diferentes tipos de proteína", "Mexer o arroz constantemente durante o cozimento", "Selar bem as carnes antes do arroz", "Usar caldo quente em vez de frio", "Refogar os vegetais após adicionar o arroz"],
+            correct: 1,
+            exp: "Mexer o arroz durante o cozimento libera excesso de amido, deixando o prato empapado e quebrando a textura típica da Jambalaya, que deve ficar soltinha e uniforme."
+        },
+        {
+            topic: "Costelinhas Barbecue",
+            q: "Qual sequência representa o processo correto de preparo da costelinha barbecue?",
+            image: "images/Costelinhas Barbecue.avif",
+            options: ["Temperar a costela e depois assar lentamente antes de finalizar com barbecue", "Assar lentamente, depois temperar e selar", "Pincelar barbecue antes de qualquer cocção", "Fritar a costela e depois levar ao forno", "Cozinhar em água antes de qualquer outro processo"],
+            correct: 0,
+            exp: "A costelinha deve ser primeiro temperada (sal, páprica etc.), depois assada lentamente para amaciar as fibras. O molho barbecue entra apenas na fase final, evitando queimar os açúcares durante o cozimento longo."
+        },
+        {
+            topic: "Costelinhas Barbecue",
+            q: "Qual erro mais compromete a textura e o sabor da costelinha barbecue?",
+            videoUrl: "https://www.youtube.com/watch?v=G4rNhcDzgVY",
+            options: ["Usar páprica no tempero inicial", "Pincelar o barbecue no início do assamento", "Assar em temperatura baixa por muito tempo", "Deixar a carne descansar após o forno", "Usar sal antes do forno"],
+            correct: 1,
+            exp: "O molho barbecue contém açúcar, que queima facilmente em longos períodos de forno. Se aplicado no início, ele carboniza, deixando sabor amargo e prejudicando o acabamento caramelizado correto."
+        },
+        {
+            topic: "Crema Catalana",
+            q: "Qual sequência representa o processo correto de preparo da Crema Catalana?",
+            image: "images/Crema Catalana.avif",
+            options: ["Queimar o açúcar antes de gelar o creme", "Misturar gemas, açúcar e amido e depois cozinhar o leite aromatizado", "Aromatizar o leite, misturar com gemas/açúcar/amido, cozinhar, gelar e só depois caramelizar", "Cozinhar tudo em fogo alto sem etapa de gel", "Misturar todos os ingredientes frios e servir imediatamente"],
+            correct: 2,
+            exp: "Primeiro o leite é aromatizado (canela e limão), depois incorporado às gemas com açúcar e amido. Após cozinhar até engrossar, o creme deve ser resfriado antes da finalização com açúcar queimado na superfície."
+        },
+        {
+            topic: "Crema Catalana",
+            q: "Qual erro mais compromete a textura e a apresentação da Crema Catalana?",
+            videoUrl: "https://www.youtube.com/watch?v=asbBCU3k2Yc",
+            options: ["Usar casca de limão no leite", "Queimar o açúcar antes do creme estar gelado", "Utilizar amido na mistura", "Aromatizar o leite por muito tempo", "Usar gemas em temperatura ambiente"],
+            correct: 1,
+            exp: "O açúcar só deve ser caramelizado no momento final. Se for queimado antes do creme estar gelado, ele derrete rapidamente e perde o efeito crocante característico da sobremesa."
+        },
+        {
+            topic: "Paella Valenciana",
+            q: "Qual sequência representa o processo correto de preparo da Paella Valenciana?",
+            image: "images/paella-valenciana.jpg",
+            options: ["Selar carnes, fazer sofrito, adicionar arroz, colocar caldo e cozinhar sem mexer", "Fazer sofrito, depois adicionar caldo e mexer constantemente", "Adicionar o arroz antes de selar as carnes", "Cozinhar arroz separadamente e depois misturar com carnes", "Colocar tudo cru na panela e cozinhar em fogo alto"],
+            correct: 0,
+            exp: "A técnica clássica começa com o selamento das carnes, seguido do sofrito (base aromática). Depois entra o arroz com o caldo, e o ponto crítico é não mexer mais, para formar a textura correta e o “socarrat”."
+        },
+        {
+            topic: "Paella Valenciana",
+            q: "Qual erro mais compromete a textura final da Paella Valenciana?",
+            videoUrl: "https://www.youtube.com/watch?v=zN8iabCuDPo",
+            options: ["Usar açafrão no caldo", "Usar caldo quente", "Selar corretamente as carnes", "Mexer o arroz durante o cozimento", "Cozinhar em fogo médio"],
+            correct: 3,
+            exp: "Mexer o arroz durante o cozimento libera amido excessivo, destruindo a camada inferior característica da paella e impedindo a formação do socarrat (crosta levemente tostada no fundo)."
+        },
+        {
+            topic: "Goulash",
+            q: "Qual sequência representa o processo correto de preparo do Goulash?",
+            image: "images/Goulash.jpg",
+            options: ["Adicionar batata antes de refogar a cebola", "Refogar cebola, adicionar páprica, depois carne e cozinhar lentamente", "Cozinhar carne primeiro e depois refogar cebola separadamente", "Misturar todos os ingredientes crus e cozinhar em fogo alto", "Adicionar páprica só no final do cozimento"],
+            correct: 1,
+            exp: "O sabor do Goulash começa com a cebola bem refogada, seguida da páprica (que deve entrar antes da carne para liberar aroma no óleo). Depois a carne é adicionada e o cozimento lento desenvolve textura e profundidade."
+        },
+        {
+            topic: "Goulash",
+            q: "Qual erro mais compromete o sabor do Goulash?",
+            videoUrl: "https://www.youtube.com/watch?v=rOZH8qaiWLI",
+            options: ["Usar carne bovina com gordura", "Cozinhar lentamente por longos períodos", "Incluir batata no cozimento", "Usar tomate na receita", "Adicionar páprica diretamente em fogo alto sem base de cebola"],
+            correct: 4,
+            exp: "A páprica queima facilmente em fogo alto. Se adicionada sem base de gordura e cebola, ela amarga e perde seu aroma característico, comprometendo totalmente o prato."
+        },
+        {
+            topic: "Fish and Chips",
+            q: "Qual sequência representa o processo correto de preparo do Fish and Chips?",
+            image: "images/Fish and Chips.jpg",
+            options: ["Fritar o peixe antes de preparar a massa", "Preparar a massa de cerveja, empanar o peixe e fritar peixe e batatas", "Cozinhar o peixe em água antes de empanar", "Assar o peixe e depois fritar as batatas", "Misturar peixe cru com batatas e fritar tudo junto"],
+            correct: 1,
+            exp: "Primeiro prepara-se a massa à base de cerveja, garantindo leveza e crocância. Depois o peixe é empanado e frito junto com as batatas em etapas separadas para manter textura ideal."
+        },
+        {
+            topic: "Fish and Chips",
+            q: "Qual erro mais compromete a textura do Fish and Chips?",
+            videoUrl: "https://www.youtube.com/watch?v=xPCyqUkNfBg",
+            options: ["Usar peixe branco fresco", "Fritar em óleo muito frio", "Usar cerveja na massa", "Cortar batatas em formato uniforme", "Temperar o peixe antes de empanar"],
+            correct: 1,
+            exp: "Óleo frio faz a massa absorver gordura, deixando o peixe encharcado e pesado. A fritura correta exige alta temperatura para formar crosta crocante rapidamente."
+        },
+        {
+            topic: "Schnitzel",
+            q: "Qual sequência representa o processo correto de preparo do Schnitzel?",
+            image: "images/Schnitzel.jpg",
+            options: ["Afinar a carne, empanar (farinha → ovo → farinha de rosca) e fritar", "Empanar a carne sem afinar e fritar direto", "Fritar a carne antes de empanar", "Cozinhar a carne em água antes de empanar", "Empanar apenas com ovo e fritar"],
+            correct: 0,
+            exp: "O Schnitzel exige carne bem fina para cocção rápida e uniforme. O empanamento segue a ordem clássica (farinha, ovo, farinha de rosca), garantindo aderência e crocância ao fritar."
+        },
+        {
+            topic: "Schnitzel",
+            q: "Qual erro mais compromete a textura do Schnitzel?",
+            videoUrl: "https://www.youtube.com/watch?v=2an_Nk5cjFM",
+            options: ["Usar carne de porco em vez de vitela", "Afinar demais a carne", "Usar farinha de rosca no empanamento", "Fritar em manteiga clarificada", "Pressionar o empanado contra a carne antes de fritar"],
+            correct: 4,
+            exp: "O empanado do Schnitzel deve ficar levemente solto (“aerado”), criando bolhas e crocância. Pressionar demais faz a camada grudar completamente, resultando em textura densa e menos crocante."
+        },
+        {
+            topic: "Coq au Vin",
+            q: "Qual sequência representa o processo correto de preparo do Coq au Vin?",
+            image: "images/Coq au Vin.jpg",
+            options: ["Selar o frango antes de marinar", "Refogar tudo junto e depois adicionar o vinho no final", "Cozinhar o frango direto no vinho sem selar", "Marinar o frango, selar, refogar guarnições e cozinhar no vinho", "Assar o frango e depois adicionar o molho"],
+            correct: 3,
+            exp: "O frango deve marinar no vinho para absorver sabor. Depois é selado para desenvolver cor e sabor, seguido do refogado dos acompanhamentos. Só então ocorre o cozimento lento no vinho, que dá identidade ao prato."
+        },
+        {
+            topic: "Coq au Vin",
+            q: "Qual erro mais compromete o sabor final do Coq au Vin?",
+            videoUrl: "https://www.youtube.com/watch?v=lfjIxW4RWkM",
+            options: ["Usar vinho tinto no preparo", "Selar bem o frango antes de cozinhar", "Refogar bacon e cogumelos", "Cozinhar lentamente após adicionar o vinho", "Pular a etapa de selar o frango"],
+            correct: 4,
+            exp: "Sem selar o frango, não ocorre a reação de Maillard, essencial para criar profundidade de sabor. O prato fica mais plano e menos complexo, mesmo com o vinho."
+        },
+        {
+            topic: "Pommes Duchesse",
+            q: "Qual sequência representa o processo correto de preparo do Pommes Duchesse?",
+            image: "images/Pommes Duchesse.avif",
+            options: ["Misturar batata com gemas e depois cozinhar", "Fazer purê seco, incorporar manteiga e gemas, modelar e assar", "Cozinhar a batata e fritar diretamente", "Misturar todos os ingredientes crus e levar ao forno", "Fazer purê com leite líquido e depois modelar"],
+            correct: 1,
+            exp: "O purê deve ser bem seco para manter estrutura. Depois entram manteiga e gemas, que dão liga e riqueza. A massa é modelada (geralmente com saco de confeitar) e assada até dourar."
+        },
+        {
+            topic: "Pommes Duchesse",
+            q: "Qual erro mais compromete a estrutura e o acabamento do Pommes Duchesse?",
+            videoUrl: "https://www.youtube.com/watch?v=mTxOzDjbCdM",
+            options: ["Usar manteiga na mistura", "Assar até dourar levemente", "Fazer um purê muito úmido antes de modelar", "Utilizar saco de confeitar", "Adicionar gemas à mistura"],
+            correct: 2,
+            exp: "Um purê úmido não mantém formato ao ser modelado e assado. O resultado fica espalhado, sem definição e sem a textura firme característica do Pommes Duchesse."
+        },
+        {
+            topic: "Linguado Belle Meunière",
+            q: "Qual sequência representa o processo correto do Linguado Belle Meunière?",
+            image: "images/Linguado Belle Meunière.JPG",
+            options: ["Fazer a manteiga noisette antes de cozinhar o peixe", "Temperar, enfarinhar, saltear o peixe e depois finalizar com manteiga noisette, limão e salsa", "Cozinhar o peixe em água e depois dourar", "Adicionar limão antes de saltear o peixe", "Misturar todos os ingredientes e levar ao forno"],
+            correct: 1,
+            exp: "O peixe deve ser temperado e levemente enfarinhado para criar crosta. Após saltear, prepara-se a manteiga noisette (levemente dourada), que é finalizada com limão e salsa sobre o peixe."
+        },
+        {
+            topic: "Linguado Belle Meunière",
+            q: "Qual erro mais compromete o sabor do prato?",
+            videoUrl: "https://www.youtube.com/watch?v=SkP4l1vctBI",
+            options: ["Usar manteiga no preparo", "Adicionar salsa fresca no final", "Queimar excessivamente a manteiga ao fazer noisette", "Enfarinhar levemente o peixe", "Saltear rapidamente o linguado"],
+            correct: 2,
+            exp: "A manteiga noisette deve ficar dourada, não queimada. Se passar do ponto, ela amarga e domina o prato, prejudicando o equilíbrio delicado do linguado."
+        },
+        {
+            topic: "Soupe à l’Oignon",
+            q: "Qual sequência representa o processo correto da Soupe à l’Oignon?",
+            image: "images/Soupe à l’Oignon.webp",
+            options: ["Caramelizar as cebolas, adicionar caldo e depois gratinar com pão e queijo", "Adicionar o caldo antes de caramelizar as cebolas", "Ferver tudo junto desde o início", "Gratinar primeiro e depois adicionar o caldo", "Cozinhar o pão dentro da sopa desde o começo"],
+            correct: 0,
+            exp: "A base do prato é a cebola bem caramelizada, que desenvolve sabor profundo. Depois entra o caldo, e só na finalização ocorre o gratinado com pão e queijo."
+        },
+        {
+            topic: "Soupe à l’Oignon",
+            q: "Qual erro mais compromete o sabor da Soupe à l’Oignon?",
+            videoUrl: "https://www.youtube.com/watch?v=EmzkM26Z9RI",
+            options: ["Não caramelizar corretamente as cebolas", "Caramelizar lentamente as cebolas", "Usar caldo de carne", "Gratinar com queijo gruyère", "Adicionar vinho branco ao preparo"],
+            correct: 0,
+            exp: "Se as cebolas não forem bem caramelizadas, o prato perde sua base de sabor doce e profundo. O resultado fica raso e menos característico."
+        },
+        {
+            topic: "Nhoque ao Molho de Limão",
+            q: "Qual sequência representa o processo correto do Nhoque ao Molho de Limão?",
+            image: "images/Nhoque ao Molho de Limão.webp",
+            options: ["Preparar o molho antes de fazer o nhoque e misturar cru", "Fazer o nhoque, cozinhar até subir, preparar o molho e depois misturar", "Cozinhar o nhoque e depois fritar antes de adicionar o molho", "Misturar todos os ingredientes e depois cozinhar juntos", "Fazer o molho e cozinhar o nhoque dentro dele desde o início"],
+            correct: 1,
+            exp: "O nhoque deve ser preparado e cozido até subir à superfície (indicando que está pronto). O molho é feito separadamente e só depois os dois são combinados para manter textura e leveza."
+        },
+        {
+            topic: "Nhoque ao Molho de Limão",
+            q: "Qual erro mais compromete a textura do nhoque?",
+            videoUrl: "https://www.youtube.com/watch?v=iaXAU-82bYA",
+            options: ["Usar limão no molho", "Preparar o molho antes do nhoque", "Retirar o nhoque da água antes de ele subir", "Misturar o molho no final", "Usar creme de leite no molho"],
+            correct: 2,
+            exp: "O nhoque só está cozido quando sobe à superfície. Retirar antes disso resulta em massa crua e pesada, comprometendo completamente a textura do prato."
+        },
+        {
+            topic: "Ossobuco com Risoto",
+            q: "Qual sequência representa o processo correto do Ossobuco com Risoto?",
+            image: "images/Ossobuco com Risoto.webp",
+            options: ["Fazer o risoto primeiro e depois iniciar o ossobuco", "Brasear o ossobuco lentamente e preparar o risoto separadamente próximo da finalização", "Cozinhar ossobuco e risoto juntos na mesma panela", "Grelhar o ossobuco rapidamente e servir com arroz simples", "Fazer o risoto e deixar descansando por muito tempo antes de servir"],
+            correct: 1,
+            exp: "O ossobuco exige cocção longa (braseado), então deve começar antes. O risoto, por outro lado, precisa ser feito na hora para manter cremosidade, sendo preparado separadamente próximo ao momento de servir."
+        },
+        {
+            topic: "Ossobuco com Risoto",
+            q: "Qual erro mais compromete o resultado final do prato?",
+            videoUrl: "https://www.youtube.com/watch?v=GxQBAajDMYc",
+            options: ["Usar vinho branco no ossobuco", "Cozinhar o ossobuco lentamente", "Preparar o risoto com caldo quente", "Fazer o risoto muito antes e deixar parado", "Selar o ossobuco antes do braseado"],
+            correct: 3,
+            exp: "O risoto perde sua textura cremosa rapidamente ao descansar. Fazer com antecedência faz com que fique seco e pastoso, comprometendo o equilíbrio do prato com o ossobuco."
+        },
+        {
+            topic: "Homus",
+            q: "Qual sequência representa o processo correto do Homus?",
+            image: "images/Homus.webp",
+            options: ["Bater o grão-de-bico com tahine, limão e alho até ficar cremoso", "Cozinhar o grão-de-bico depois de bater", "Misturar tudo inteiro sem triturar", "Refogar os ingredientes antes de bater", "Assar o grão-de-bico antes de processar"],
+            correct: 0,
+            exp: "O homus é uma pasta lisa. O processo correto é bater todos os ingredientes até atingir textura cremosa e homogênea, sem etapas de cocção adicional nessa fase."
+        },
+        {
+            topic: "Homus",
+            q: "Qual erro mais compromete a textura do homus?",
+            videoUrl: "https://www.youtube.com/watch?v=YUAcA88yxN4",
+            options: ["Usar limão fresco", "Usar alho cru", "Adicionar tahine", "Bater pouco a mistura, deixando granulada", "Temperar no final"],
+            correct: 3,
+            exp: "Se não for bem processado, o homus fica com textura granulada e pesada, perdendo a característica principal que é a cremosidade lisa."
+        },
+        {
+            topic: "Falafel",
+            q: "Qual sequência representa o processo correto do Falafel?",
+            image: "images/Falafel.webp",
+            options: ["Cozinhar o grão-de-bico antes de triturar", "Triturar o grão-de-bico cru hidratado, modelar e fritar", "Misturar tudo e assar diretamente", "Fritar o grão-de-bico inteiro antes de triturar", "Cozinhar e depois empanar antes de fritar"],
+            correct: 1,
+            exp: "O falafel tradicional usa grão-de-bico cru hidratado (não cozido). Ele é triturado com temperos, modelado e frito, garantindo textura crocante por fora e macia por dentro."
+        },
+        {
+            topic: "Falafel",
+            q: "Qual erro mais compromete a estrutura do falafel?",
+            videoUrl: "https://www.youtube.com/watch?v=HsDHGN2LjE4",
+            options: ["Usar salsinha na mistura", "Triturar bem a massa", "Usar grão-de-bico cozido em vez de cru hidratado", "Fritar em óleo quente", "Modelar em formato de bolinhas"],
+            correct: 2,
+            exp: "O grão-de-bico cozido tem muita umidade e pouca estrutura, fazendo o falafel se desmanchar na fritura. O uso do grão cru hidratado é essencial para dar liga e textura correta."
+        },
+        {
+            topic: "Babaganoush",
+            q: "Qual sequência representa o processo correto do Babaganoush?",
+            image: "images/Babaganoush.webp",
+            options: ["Misturar todos os ingredientes crus sem assar a berinjela", "Fritar a berinjela antes de misturar", "Cozinhar a berinjela em água e depois bater", "Assar a berinjela, retirar a polpa e misturar com tahine, limão e alho", "Bater tudo no liquidificador sem preparo prévio"],
+            correct: 3,
+            exp: "A berinjela precisa ser assada para desenvolver sabor defumado e textura macia. Só depois a polpa é misturada aos demais ingredientes para formar a pasta."
+        },
+        {
+            topic: "Babaganoush",
+            q: "Qual erro mais compromete o sabor característico do Babaganoush?",
+            videoUrl: "https://www.youtube.com/watch?v=rW1lTP0jDpg",
+            options: ["Usar limão fresco", "Adicionar tahine", "Misturar bem os ingredientes", "Temperar com sal no final", "Não assar a berinjela antes de misturar"],
+            correct: 4,
+            exp: "Sem assar, a berinjela não desenvolve o sabor defumado típico do prato. O resultado fica plano e distante do perfil tradicional do Babaganoush."
+        },
+        {
+            topic: "Mjadra",
+            q: "Qual sequência representa o processo correto do Mjadra?",
+            image: "images/Mjadra.jpg",
+            options: ["Cozinhar arroz e lentilha separadamente e misturar no final", "Caramelizar cebola primeiro, depois adicionar arroz cru e lentilha crua juntos", "Cozinhar as lentilhas, adicionar o arroz e finalizar com cebolas caramelizadas", "Cozinhar tudo junto desde o início sem etapas separadas", "Fritar o arroz antes de cozinhar a lentilha"],
+            correct: 2,
+            exp: "As lentilhas precisam de mais tempo de cocção, então são iniciadas primeiro. Depois entra o arroz, e as cebolas caramelizadas são adicionadas no final para preservar sabor e textura."
+        },
+        {
+            topic: "Mjadra",
+            q: "Qual erro mais compromete a textura do Mjadra?",
+            videoUrl: "https://www.youtube.com/watch?v=c_9rN0CmqG0",
+            options: ["Usar cebola caramelizada", "Cozinhar as lentilhas antes do arroz", "Adicionar o arroz muito cedo junto com lentilhas ainda duras", "Temperar no final", "Usar panela funda"],
+            correct: 2,
+            exp: "Se o arroz entra cedo demais, ele passa do ponto enquanto as lentilhas ainda cozinham. O resultado é arroz empapado e lentilhas desiguais, prejudicando a textura do prato."
+        },
+        {
+            topic: "Charuto",
+            q: "Qual sequência representa o processo correto do Charuto?",
+            image: "images/Charuto.avif",
+            options: ["Cozinhar o arroz totalmente antes de rechear", "Rechear as folhas cruas, enrolar e depois cozinhar lentamente", "Fritar os charutos antes de cozinhar", "Cozinhar as folhas e servir sem recheio", "Misturar tudo e assar no forno"],
+            correct: 1,
+            exp: "O arroz do recheio normalmente vai cru (ou parcialmente hidratado) e termina de cozinhar dentro das folhas durante a cocção lenta, absorvendo sabor e garantindo textura correta."
+        },
+        {
+            topic: "Charuto",
+            q: "Qual erro mais compromete a estrutura do prato?",
+            videoUrl: "https://www.youtube.com/watch?v=MamNy50P2kM",
+            options: ["Usar folhas de uva", "Enrolar firmemente os charutos", "Cozinhar lentamente após enrolar", "Não enrolar bem, deixando os charutos soltos", "Utilizar carne moída no recheio"],
+            correct: 3,
+            exp: "Se os charutos não forem bem enrolados, eles se abrem durante o cozimento, perdendo formato e liberando o recheio, o que compromete tanto a apresentação quanto a textura."
+        },
+        {
+            topic: "Gobi Masala",
+            q: "Qual sequência representa o processo correto do Gobi Masala?",
+            image: "images/Gobi Masala.jpg",
+            options: ["Refogar cebola e especiarias, adicionar tomate e depois cozinhar a couve-flor", "Cozinhar a couve-flor em água antes de refogar os temperos", "Misturar todos os ingredientes crus e cozinhar juntos", "Fritar a couve-flor e servir sem molho", "Adicionar as especiarias apenas no final"],
+            correct: 0,
+            exp: "O prato começa com o refogado de cebola e especiarias para liberar aromas. Depois entra o tomate, formando o molho, e por fim a couve-flor cozinha absorvendo esses sabores."
+        },
+        {
+            topic: "Gobi Masala",
+            q: "Qual erro mais compromete o sabor do Gobi Masala?",
+            videoUrl: "https://www.youtube.com/watch?v=7UQQqjxd5-c",
+            options: ["Usar garam masala no preparo", "Refogar bem os temperos no início", "Adicionar as especiarias sem refogar, diretamente no líquido", "Cozinhar a couve-flor no molho", "Utilizar tomate na base"],
+            correct: 2,
+            exp: "As especiarias precisam ser ativadas no calor com gordura (refogadas). Se forem adicionadas direto no líquido, o sabor fica cru e menos intenso, prejudicando o prato."
+        },
+        {
+            topic: "Pad Thai",
+            q: "Qual sequência representa o processo correto do Pad Thai?",
+            image: "images/Pad Thai.webp",
+            options: ["Cozinhar o macarrão junto com todos os ingredientes desde o início", "Saltear rapidamente os ingredientes em wok e adicionar o macarrão hidratado", "Ferver todos os ingredientes em caldo antes de saltear", "Preparar o molho depois de finalizar o prato", "Assar os ingredientes antes de misturar"],
+            correct: 1,
+            exp: "O Pad Thai é um prato de cocção rápida em wok. Os ingredientes são salteados em alta temperatura, e o macarrão (já hidratado) entra depois para absorver o molho sem passar do ponto."
+        },
+        {
+            topic: "Pad Thai",
+            q: "Qual erro mais compromete a textura do Pad Thai?",
+            videoUrl: "https://www.youtube.com/watch?v=mCYeHOXV9sA",
+            options: ["Usar amendoim na finalização", "Saltear em fogo alto", "Usar macarrão já hidratado", "Cozinhar demais o macarrão no wok", "Adicionar molho durante o preparo"],
+            correct: 3,
+            exp: "O macarrão de arroz cozinha muito rápido. Se ficar tempo demais no wok, ele passa do ponto, ficando mole e grudando, o que compromete totalmente a textura do prato."
+        },
+        {
+            topic: "Frango Xadrez",
+            q: "Qual sequência representa o processo correto do Frango Xadrez?",
+            image: "images/Frango Xadrez.jpg",
+            options: ["Saltear o frango em fogo alto, depois adicionar legumes e finalizar com o molho", "Cozinhar o frango em água antes de saltear", "Misturar todos os ingredientes crus e cozinhar lentamente", "Refogar os legumes antes e adicionar o frango cru depois", "Assar o frango e depois misturar com os vegetais"],
+            correct: 0,
+            exp: "O frango deve ser selado rapidamente em fogo alto para manter suculência. Em seguida entram os legumes, preservando textura crocante, e o molho finaliza o prato."
+        },
+        {
+            topic: "Frango Xadrez",
+            q: "Qual erro mais compromete a textura do Frango Xadrez?",
+            videoUrl: "https://www.youtube.com/watch?v=qLAau0Eoc3k",
+            options: ["Usar pimentões variados", "Saltear em fogo alto", "Cortar o frango em cubos", "Adicionar amendoim no final", "Cozinhar em excesso após adicionar os legumes"],
+            correct: 4,
+            exp: "Os legumes devem permanecer levemente crocantes. Cozinhar demais deixa tudo mole e sem contraste de textura, prejudicando a característica do prato."
+        },
+        {
+            topic: "Chow Fan",
+            q: "Qual sequência representa o processo correto do Chow Fan?",
+            image: "images/Chow Fan.jpg",
+            options: ["Usar arroz recém-cozido e misturar tudo diretamente", "Cozinhar o arroz junto com os outros ingredientes desde o início", "Saltear proteína e ovo, adicionar arroz já frio e finalizar com cebolinha", "Refogar apenas vegetais e adicionar arroz no final sem saltear", "Misturar tudo frio e depois aquecer lentamente"],
+            correct: 2,
+            exp: "O preparo clássico começa com a proteína e o ovo, depois entra o arroz já cozido e frio (ideal para não grudar), sendo salteado rapidamente para ganhar textura e sabor."
+        },
+        {
+            topic: "Chow Fan",
+            q: "Qual erro mais compromete a textura do Chow Fan?",
+            videoUrl: "https://www.youtube.com/watch?v=SG1de-MRdKg",
+            options: ["Usar cebolinha fresca no final", "Saltear em fogo alto", "Usar arroz recém-cozido e quente", "Adicionar ovo durante o preparo", "Misturar rapidamente no wok"],
+            correct: 2,
+            exp: "Arroz recém-cozido tem muita umidade e amido solto, o que faz o prato ficar empapado e grudado. O ideal é usar arroz frio (de preferência do dia anterior) para garantir grãos soltos."
+        },
+        {
+            topic: "Yakissoba",
+            q: "Qual sequência representa o processo correto do Yakissoba?",
+            image: "images/Yakissoba.png",
+            options: ["Usar proteínas, adicionar legumes e depois o macarrão com molho", "Cozinhar o macarrão junto com os legumes desde o início", "Misturar todos os ingredientes crus e cozinhar lentamente", "Preparar o molho separado e não aquecer com os demais ingredientes", "Fritar apenas o macarrão e adicionar os outros ingredientes no final"],
+            correct: 0,
+            exp: "O preparo segue lógica de wok: primeiro proteínas (para selar), depois legumes (mantendo crocância) e, por fim, o macarrão com o molho para integrar tudo rapidamente."
+        },
+        {
+            topic: "Yakissoba",
+            q: "Qual erro mais compromete a textura do Yakissoba?",
+            videoUrl: "https://www.youtube.com/watch?v=546eNWOzSFQ",
+            options: ["Usar molho shoyu", "Cozinhar demais os legumes até ficarem moles", "Saltear em fogo alto", "Adicionar o macarrão no final", "Usar diferentes tipos de carne"],
+            correct: 1,
+            exp: "O Yakissoba depende do contraste de textura. Legumes muito cozidos perdem crocância e deixam o prato pesado e sem identidade."
+        },
+        {
+            topic: "Mafé",
+            q: "Qual sequência representa o processo correto do Mafé?",
+            image: "images/Mafé.webp",
+            options: ["Adicionar a pasta de amendoim no início junto com a carne crua", "Cozinhar a carne, desenvolver o molho e finalizar com pasta de amendoim", "Misturar todos os ingredientes crus e cozinhar rapidamente", "Preparar apenas o molho e adicionar a carne no final", "Fritar a pasta de amendoim separadamente antes de tudo"],
+            correct: 1,
+            exp: "A carne deve cozinhar primeiro para liberar sabor e formar base com tomate e cebola. A pasta de amendoim entra no final, dando corpo e cremosidade ao molho sem queimar."
+        },
+        {
+            topic: "Mafé",
+            q: "Qual erro mais compromete o resultado do Mafé?",
+            videoUrl: "https://www.youtube.com/watch?v=Ki97ijE4ZfE",
+            options: ["Usar tomate no preparo", "Cozinhar a carne lentamente", "Adicionar a pasta de amendoim muito cedo", "Temperar no final", "Usar cebola na base"],
+            correct: 2,
+            exp: "A pasta de amendoim pode grudar e queimar se adicionada cedo demais. Além disso, perde a textura cremosa ideal, prejudicando o molho característico do prato."
+        },
+        {
+            topic: "Muamba de Galinha",
+            q: "Qual sequência representa o processo correto da Muamba de Galinha?",
+            image: "images/Muamba de Galinha.webp",
+            options: ["Fritar o quiabo antes de cozinhar o frango", "Assar o frango antes de cozinhar com o molho", "Misturar todos os ingredientes crus e cozinhar rapidamente", "Cozinhar o frango lentamente e depois adicionar o quiabo e o dendê", "Cozinhar apenas o quiabo e adicionar o frango no final"],
+            correct: 3,
+            exp: "O frango precisa cozinhar lentamente para formar base de sabor. O quiabo e o dendê entram depois, permitindo que o prato encorpe sem comprometer textura."
+        },
+        {
+            topic: "Muamba de Galinha",
+            q: "Qual erro mais compromete a textura da Muamba de Galinha?",
+            videoUrl: "https://www.youtube.com/watch?v=9OLNDDNwsyQ",
+            options: ["Usar óleo de dendê", "Adicionar o quiabo muito cedo no preparo", "Cozinhar lentamente", "Usar alho no tempero", "Temperar o frango antes de cozinhar"],
+            correct: 1,
+            exp: "Se o quiabo entra cedo demais, ele libera muita baba e se desmancha, prejudicando a textura do prato. O ideal é adicionar mais próximo do final."
+        },
+        {
+            topic: "Galinha à Zambézia",
+            q: "Qual sequência representa o processo correto da Galinha à Zambézia?",
+            image: "images/Galinha à Zambézia.webp",
+            options: ["Grelhar o frango antes de marinar", "Misturar todos os ingredientes crus e assar", "Cozinhar o frango no molho de coco desde o início", "Marinar o frango, grelhar e servir com molho de coco", "Fritar o frango e depois marinar"],
+            correct: 3,
+            exp: "O frango deve marinar para absorver sabor (limão, alho, pimenta). Depois é grelhado para ganhar textura e finalizado com o molho de coco, mantendo equilíbrio entre sabor e suculência."
+        },
+        {
+            topic: "Galinha à Zambézia",
+            q: "Qual erro mais compromete o sabor e a suculência do prato?",
+            videoUrl: "https://www.youtube.com/watch?v=eu23elHaumI",
+            options: ["Usar leite de coco no molho", "Pular a etapa de marinada", "Grelhar o frango após marinar", "Servir com molho de coco", "Usar limão no tempero"],
+            correct: 1,
+            exp: "A marinada é essencial para sabor e maciez. Sem ela, o frango fica menos suculento e com sabor superficial, prejudicando o resultado final."
+        },
+
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+
+    function startQuiz() {
+        document.getElementById('intro-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.add('active');
+        updateProgress();
+        loadQuestion();
+    }
+
+    function updateProgress() {
+        const progress = ((currentQuestion) / questions.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('question-counter').innerText = `Questão ${currentQuestion + 1} de ${questions.length}`;
+    }
+
+    function loadQuestion() {
+        const qData = questions[currentQuestion];
+        document.getElementById('question-text').innerText = qData.q;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        // Gerir imagem relacionada à pergunta (se existir) ou manter espaço reservado
+        const imgContainer = document.getElementById('question-image');
+        if (qData.image) {
+            imgContainer.innerHTML = `<img src="${qData.image}" alt="Imagem relacionada à pergunta">`;
+            imgContainer.setAttribute('aria-hidden', 'false');
+        } else if (qData.videoUrl) {
+            imgContainer.innerHTML = `<a href="${qData.videoUrl}" target="_blank" rel="noopener noreferrer">Ver vídeo do YouTube</a>`;
+            imgContainer.setAttribute('aria-hidden', 'false');
+        } else {
+            imgContainer.innerHTML = '';
+            imgContainer.setAttribute('aria-hidden', 'true');
+        }
+        
+        const letras = ['A', 'B', 'C', 'D', 'E'];
+        
+        qData.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<span>${letras[index]})</span> ${opt}`;
+            btn.onclick = () => checkAnswer(index, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+        const qData = questions[currentQuestion];
+        const allBtns = document.querySelectorAll('.option-btn');
+        
+        // Desativar botões
+        allBtns.forEach(btn => btn.disabled = true);
+
+        const titleEl = document.getElementById('feedback-title');
+        
+        if (selectedIndex === qData.correct) {
+            btnElement.classList.add('correct');
+            titleEl.innerText = "✅ Correto!";
+            titleEl.style.color = "var(--success)";
+            score++;
+        } else {
+            btnElement.classList.add('wrong');
+            allBtns[qData.correct].classList.add('correct');
+            titleEl.innerText = "❌ Incorreto!";
+            titleEl.style.color = "var(--error)";
+        }
+
+        document.getElementById('feedback-text').innerHTML = `<strong>Explicação:</strong> ${qData.exp}`;
+        
+        if (currentQuestion === questions.length - 1) {
+            document.getElementById('next-btn').innerText = "Ver Resultado Final";
+        }
+
+        // Mostrar Painel
+        document.getElementById('feedback-panel').classList.add('show');
+    }
+
+    function nextQuestion() {
+        document.getElementById('feedback-panel').classList.remove('show');
+        
+        setTimeout(() => {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                updateProgress();
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }, 400); // Tempo para a animação do painel descer
+    }
+
+    function showResults() {
+        document.getElementById('quiz-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        document.getElementById('progress-bar').style.width = '100%';
+        
+        document.getElementById('final-score').innerText = `${score}/${questions.length}`;
+        
+        const titleEl = document.getElementById('result-title');
+        const msgEl = document.getElementById('result-message');
+        
+        if(score === 50) {
+            titleEl.innerText = "Grão-Mestre da Cozinha Mundial!";
+            msgEl.innerText = "Incrível! Demonstras um conhecimento impecável das técnicas de todas as regiões: woks asiáticas, purés europeus, especiarias indianas, natas, caril, óleo de palma e leite de coco de África.";
+        } else if(score >= 40) {
+            titleEl.innerText = "Excelente Cozinheiro!";
+            msgEl.innerText = "Ótima pontuação! Compreendes perfeitamente a lógica dos processos e técnicas de cozedura e escorregas apenas em pequenos detalhes pontuais.";
+        } else {
+            titleEl.innerText = "Precisa voltar para os tachos...";
+            msgEl.innerText = "A culinária mundial exige precisão absoluta. Reveja os processos de cozedura, emulsão, marinadas e controlo térmico das gorduras.";
+        }
+    }
+
+    /* LÓGICA DO EASTER EGG */
+    function checkSecretCode(value) {
+        const word = value.toLowerCase().trim();
+        // Aceita "fernanda" ou a digitação exata "fermanda" sugerida
+        if (word === 'fernanda' || word === 'fermanda') {
+            document.getElementById('result-screen').classList.remove('active');
+            document.getElementById('easter-egg-screen').classList.add('active');
+            document.getElementById('easter-egg-trigger').value = ''; // Limpa o campo para o futuro
+        }
+    }
+
+    function closeEasterEgg() {
+        document.getElementById('easter-egg-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+    }
+</script>
+
+</body>
+</html>
